@@ -1,8 +1,20 @@
 # lport
 
-See what is listening on your ports, and stop it, from the tray. Linux, written in Rust.
+See what is listening on your ports, and stop it, from the tray on Linux.
 
 Each port shows the process and the folder it was started from, like `:5173 node · somu-fe`.
+
+## Install
+
+```sh
+git clone git@github.com:thesarfo/lport.git
+cd lport
+./install.sh
+```
+
+Or unpack a release tarball and run `./install.sh` inside it.
+
+This installs the `lport` command, an app menu entry, and autostart. Remove everything with `./install.sh uninstall`.
 
 ## Use
 

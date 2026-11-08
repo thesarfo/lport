@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=lport
+Comment=Port watcher
+Exec=@BIN@
+Icon=network-server
+Terminal=false
+X-GNOME-Autostart-enabled=true
