@@ -1,7 +1,15 @@
 mod procnet;
 mod tray;
 
-use std::{env, process, thread, time::Duration};
+use std::{
+    env,
+    os::{
+        linux::net::SocketAddrExt,
+        unix::net::{SocketAddr, UnixListener},
+    },
+    process, thread,
+    time::Duration,
+};
 
 use ksni::blocking::TrayMethods;
 
@@ -33,6 +41,11 @@ fn main() {
 }
 
 fn run_tray() {
+    // only one tray: the lock is an abstract socket, freed by the kernel when we exit
+    let Ok(_lock) = SocketAddr::from_abstract_name(b"lport").and_then(|a| UnixListener::bind_addr(&a)) else {
+        eprintln!("lport: already running");
+        return;
+    };
     let handle = match (tray::Tray { listeners: procnet::listeners() }).spawn() {
         Ok(h) => h,
         Err(e) => {
