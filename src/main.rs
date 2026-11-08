@@ -1,26 +1,57 @@
 mod procnet;
+mod tray;
 
-use std::{env, process};
+use std::{env, process, thread, time::Duration};
+
+use ksni::blocking::TrayMethods;
 
 const USAGE: &str = "\
 lport: see and stop what is listening on your ports
 
 usage:
+  lport             run the tray icon
   lport list        print listening ports
   lport kill PORT   stop the process listening on PORT (SIGTERM)
 ";
+
+const POLL: Duration = Duration::from_secs(2);
 
 fn main() {
     let args: Vec<String> = env::args().skip(1).collect();
     let args: Vec<&str> = args.iter().map(String::as_str).collect();
     match args.as_slice() {
-        [] | ["list"] => list(),
+        [] => run_tray(),
+        ["list"] => list(),
         ["kill", port] => kill(port),
         ["-h" | "--help"] => print!("{USAGE}"),
         ["-V" | "--version"] => println!("lport {}", env!("CARGO_PKG_VERSION")),
         _ => {
             eprint!("{USAGE}");
             process::exit(2);
+        }
+    }
+}
+
+fn run_tray() {
+    let handle = match (tray::Tray { listeners: procnet::listeners() }).spawn() {
+        Ok(h) => h,
+        Err(e) => {
+            eprintln!("lport: no tray ({e}). On GNOME, enable the AppIndicator extension.");
+            process::exit(1);
+        }
+    };
+    loop {
+        thread::sleep(POLL);
+        let now = procnet::listeners();
+        let changed = handle.update(|t| {
+            let changed = t.listeners != now;
+            if changed {
+                t.listeners = now;
+            }
+            changed
+        });
+        if changed.is_none() {
+            return; // tray service shut down
         }
     }
 }
